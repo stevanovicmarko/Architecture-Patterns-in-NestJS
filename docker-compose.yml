@@ -1,5 +1,5 @@
 services:
-  db:
+  postgres:
     image: postgres:16.2
     restart: always
     ports:
@@ -7,4 +7,14 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: db
+      POSTGRES_DB: alarms
+
+  mongodb:
+    image: mongo:6.0.14-jammy
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mongo
+      MONGO_INITDB_ROOT_PASSWORD: mongo
+      MONGO_INITDB_DATABASE: alarms
+
