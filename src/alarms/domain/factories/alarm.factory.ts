@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { AlarmSeverity } from '../value-objects/alarm-severity';
 import { Injectable } from '@nestjs/common';
 import { AlarmItem } from '../alarm-item';
+import { AlarmCreatedEvent } from '../events/alarm-created.event';
 
 @Injectable()
 export class AlarmFactory {
@@ -30,6 +31,8 @@ export class AlarmFactory {
     for (const item of alarmItems) {
       alarm.addAlarmItem(item);
     }
+    alarm.apply(new AlarmCreatedEvent(alarm), { skipHandler: true }); // skipHandler is a custom option to avoid
+    // calling the local event handler
     return alarm;
   }
 }

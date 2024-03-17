@@ -1,9 +1,7 @@
-import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventPublisher, ICommandHandler } from '@nestjs/cqrs';
 import { CreateAlarmCommand } from './create-alarm.command';
 import { Logger } from '@nestjs/common';
 import { AlarmFactory } from '../../domain/factories/alarm.factory';
-import { CreateAlarmRepository } from '../ports/create-alarm.repository';
-import { AlarmCreatedEvent } from '../../domain/events/alarm-created.event';
 
 @CommandHandler(CreateAlarmCommand) // register the command handler
 export class CreateAlarmCommandHandler
@@ -12,9 +10,8 @@ export class CreateAlarmCommandHandler
   private readonly logger = new Logger(CreateAlarmCommandHandler.name);
 
   constructor(
-    private readonly alarmRepository: CreateAlarmRepository,
+    private readonly eventPublisher: EventPublisher,
     private readonly alarmFactory: AlarmFactory,
-    private readonly eventBus: EventBus,
   ) {}
   async execute(command: CreateAlarmCommand) {
     this.logger.debug(
@@ -26,7 +23,12 @@ export class CreateAlarmCommandHandler
       command.triggeredAt,
       command.items,
     );
-    this.eventBus.publish(new AlarmCreatedEvent(alarm));
-    return this.alarmRepository.save(alarm);
+
+    // allows using apply method of the aggregate to apply event to the aggregate
+    // to commit changes to the event store
+    // otherwise the event would never reach the event store
+    this.eventPublisher.mergeObjectContext(alarm);
+    alarm.commit();
+    return alarm;
   }
 }

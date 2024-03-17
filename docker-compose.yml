@@ -1,5 +1,5 @@
 services:
-  postgres:
+  write-model-db:
     image: postgres:16.2
     restart: always
     ports:
@@ -9,12 +9,26 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: alarms
 
-  mongodb:
+  read-model-db:
     image: mongo:6.0.14-jammy
+    environment:
+      - MONGODB_DATABASE="read-model-db"
     ports:
       - "27017:27017"
+    volumes:
+      - read-model-db-data:/data/db:cached # mongo-storage
+      - read-model-db-config:/data/configdb:cached
+  event-store:
+    image: mongo:6.0.14-jammy
+    ports:
+      - "27018:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mongo
-      MONGO_INITDB_ROOT_PASSWORD: mongo
-      MONGO_INITDB_DATABASE: alarms
+      - MONGODB_DATABASE="event-store-db"
+    command: mongod --replSet rs0
 
+    volumes:
+      - ./event-store-mongoinit.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+
+volumes:
+  read-model-db-data:
+  read-model-db-config:

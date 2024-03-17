@@ -2,8 +2,20 @@ import { Module } from '@nestjs/common';
 import { ApplicationBootstrapOptions } from '../common/interfaces/application-bootstrap-options.interface';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MongooseModule } from '@nestjs/mongoose';
+import { EVENT_STORE_CONNECTION } from './core.constants';
 
-@Module({})
+@Module({
+  imports: [
+    MongooseModule.forRoot(
+      'mongodb://localhost:27018/?replicaSet=rs0',
+      {
+        dbName: 'event-store-db',
+        directConnection: true,
+        connectionName: EVENT_STORE_CONNECTION, // use separate connection namespace
+      },
+    ),
+  ],
+})
 export class CoreModule {
   static forRoot(options: ApplicationBootstrapOptions) {
     const imports =
@@ -21,8 +33,9 @@ export class CoreModule {
               autoLoadEntities: true,
               synchronize: true,
             }),
-            MongooseModule.forRoot('mongodb://mongo:mongo@localhost:27017', {
-              dbName: 'alarms',
+            MongooseModule.forRoot('mongodb://localhost:27017', {
+              dbName: 'read-model-db',
+              // connectionName: 'read-model-connection',
             }),
           ]
         : [];
